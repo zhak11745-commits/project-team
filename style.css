@@ -1,142 +1,46 @@
-document.addEventListener('DOMContentLoaded', () => {
-  // DOM refs
-  const valueInput = document.getElementById("value");
-  const fromSelect = document.getElementById("from");
-  const toSelect = document.getElementById("to");
-  const resultValue = document.getElementById("result-value");
-  const resultDesc = document.getElementById("result-desc");
-  const swapBtn = document.getElementById("swap-btn");
-  const copyBtn = document.getElementById("copy-btn");
-  const copyAll = document.getElementById("copy-all");
-  const clearHistory = document.getElementById("clear-history");
-  const historyList = document.getElementById("history-list");
-  const tableBody = document.querySelector("#conversion-table tbody");
-  const themeToggle = document.getElementById("theme-toggle");
+:root {
+  --bg: #f7f7f7;
+  --text: #111827;
+  --card: #ffffff;
+  --accent: #2b73ff;
+  --border: #e6eef8;
+}
+body {
+  margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; background:var(--bg); color:var(--text);
+  transition: background .28s ease, color .28s ease;
+}
+header{background:transparent;padding:14px 20px}
+.header-inner{display:flex;align-items:center;gap:12px}
+.logo{background:linear-gradient(135deg,var(--accent),#3bc7ff);color:#fff;padding:10px 14px;border-radius:10px;font-weight:700}
+.title-group h1{margin:0;font-size:1.2rem}
+.subtitle{margin:2px 0 0;color:#6b7280;font-size:0.9rem}
+.theme-btn{background:#f1f5f9;border:0;padding:8px;border-radius:8px;cursor:pointer}
+.container{max-width:1000px;margin:18px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:16px}
+.card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(12,12,20,0.06);border:1px solid var(--border)}
+label{display:block;font-weight:600;margin-bottom:6px}
+input, select{width:100%;padding:10px;border-radius:8px;border:1px solid #dbe9ff;background:#fbfdff}
+.selectors{display:flex;align-items:flex-end;gap:12px;margin:10px 0}
+.sel{flex:1}
+.swap-wrap{display:flex;align-items:center}
+#swap-btn{padding:8px 12px;border-radius:8px;background:var(--accent);color:#fff;border:0;cursor:pointer}
+.actions{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.actions button{flex:1;min-width:120px;padding:10px;border-radius:8px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.result{margin-top:8px}
+.result h2{font-size:1.4rem;margin-bottom:6px}
+.table-container{overflow:auto}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #eef6ff;text-align:center}
+th{background:var(--accent);color:#fff;text-align:left;padding-left:10px}
+.copy-btn-small{padding:6px 8px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+#history-list{margin-top:8px;list-style:disc;margin-left:18px}
 
-  if (!valueInput || !fromSelect || !toSelect || !resultValue || !tableBody) {
-    console.error('Elemen penting tidak ditemukan — periksa index.html');
-    return;
-  }
-  
-  // Objek baru untuk unit suhu dan formula konversinya ke basis (Celsius)
-  const UNITS = {
-    C: { name: 'Celsius', toBase: val => val, fromBase: val => val },
-    F: { name: 'Fahrenheit', toBase: val => (val - 32) * 5 / 9, fromBase: val => (val * 9 / 5) + 32 },
-    K: { name: 'Kelvin', toBase: val => val - 273.15, fromBase: val => val + 273.15 }
-  };
-
-  // Format angka dengan maksimal 2 angka di belakang koma
-  const nf = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
-
-  function formatNumber(num) {
-    if (!isFinite(num)) return '0';
-    return nf.format(Number(Number(num).toFixed(2)));
-  }
-
-  function populateSelects() {
-    if (fromSelect.options.length > 0) return;
-    Object.keys(UNITS).forEach(k => {
-      const o1 = document.createElement('option'); o1.value = k; o1.text = ${k} (${UNITS[k].name}); fromSelect.add(o1);
-      const o2 = document.createElement('option'); o2.value = k; o2.text = ${k} (${UNITS[k].name}); toSelect.add(o2);
-    });
-    // Default konversi C ke F
-    fromSelect.value = 'C';
-    toSelect.value = 'F';
-  }
-
-  function convertAndRender() {
-    const raw = valueInput.value;
-    const val = parseFloat(raw);
-    const from = fromSelect.value;
-    const to = toSelect.value;
-    
-    if (raw === '' || isNaN(val)) {
-      resultValue.textContent = '–';
-      resultDesc.textContent = 'Masukkan nilai untuk konversi';
-      tableBody.innerHTML = '';
-      return;
-    }
-    
-    // Konversi nilai input ke basis (Celsius)
-    const baseValue = UNITS[from].toBase(val);
-    // Konversi dari basis ke unit tujuan
-    const out = UNITS[to].fromBase(baseValue);
-    
-    const outFormatted = formatNumber(out);
-    const valFormatted = formatNumber(val);
-
-    resultValue.textContent = ${outFormatted}° ${to};
-    resultDesc.textContent = ${UNITS[to].name} — dari ${valFormatted}° ${UNITS[from].name};
-
-    addHistoryEntry(${valFormatted}° ${from} → ${outFormatted}° ${to});
-    renderTable(baseValue);
-  }
-
-  function renderTable(baseValue) {
-    tableBody.innerHTML = '';
-    Object.entries(UNITS).forEach(([unit, formulas]) => {
-      const v = formulas.fromBase(baseValue);
-      const row = document.createElement('tr');
-      const tdUnit = document.createElement('td'); tdUnit.textContent = ${unit} (${formulas.name});
-      const tdVal = document.createElement('td'); tdVal.textContent = formatNumber(v);
-      const tdAct = document.createElement('td');
-      const btn = document.createElement('button'); btn.className = 'copy-btn-small'; btn.type = 'button'; btn.textContent = 'Salin';
-      
-      btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(formatNumber(v));
-      });
-      
-      tdAct.appendChild(btn);
-      row.appendChild(tdUnit);
-      row.appendChild(tdVal);
-      row.appendChild(tdAct);
-      tableBody.appendChild(row);
-    });
-  }
-
-  function addHistoryEntry(text) {
-    if (!historyList) return;
-    if (historyList.firstElementChild && historyList.firstElementChild.textContent === 'Belum ada riwayat') historyList.innerHTML = '';
-    const li = document.createElement('li');
-    li.textContent = ${new Date().toLocaleTimeString('id-ID')} — ${text};
-    historyList.prepend(li);
-    if (historyList.children.length > 50) historyList.removeChild(historyList.lastChild);
-  }
-
-  // Event Listeners (tidak ada perubahan di sini)
-  valueInput.addEventListener('input', convertAndRender);
-  fromSelect.addEventListener('change', convertAndRender);
-  toSelect.addEventListener('change', convertAndRender);
-
-  swapBtn && swapBtn.addEventListener('click', () => {
-    [fromSelect.value, toSelect.value] = [toSelect.value, fromSelect.value];
-    convertAndRender();
-  });
-
-  copyBtn && copyBtn.addEventListener('click', () => {
-    const txt = resultValue.textContent.split(' ')[0]; // Hanya salin angkanya
-    if (txt && txt !== '–') navigator.clipboard.writeText(txt);
-  });
-
-  copyAll && copyAll.addEventListener('click', () => {
-    const rows = Array.from(tableBody.querySelectorAll('tr')).map(r => {
-      return r.children[0].textContent + ': ' + r.children[1].textContent;
-    }).join('\n');
-    if (rows) navigator.clipboard.writeText(rows);
-  });
-
-  clearHistory && clearHistory.addEventListener('click', () => {
-    if (historyList) historyList.innerHTML = '<li>Belum ada riwayat</li>';
-  });
-
-  themeToggle && themeToggle.addEventListener('click', () => {
-    const isDark = document.body.classList.toggle('dark-mode');
-    themeToggle.setAttribute('aria-pressed', String(isDark));
-    themeToggle.textContent = isDark ? '☀️' : '🌙';
-  });
-
-  // Inisialisasi
-  populateSelects();
-  if (valueInput.value === '') valueInput.value = '30'; // Nilai default yang masuk akal untuk suhu
-  convertAndRender();
-});
+/* dark (v2-like) */
+body.dark-mode{
+  --bg:#0f1724; --text:#e6edf3; --card:#0b1220; --accent:#57a0ff; --border:#24303c;
+  background:var(--bg); color:var(--text);
+}
+body.dark-mode .card{background:var(--card); border-color:var(--border); box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+body.dark-mode input, body.dark-mode select{background:#15181d;border:1px solid #30363d;color:var(--text)}
+body.dark-mode th{background:#238636}
+body.dark-mode .theme-btn{background:#15181d;color:var(--text)}
+@media (max-width:720px){ .selectors{flex-direction:column;align-items:stretch} .actions{flex-direction:column} }
