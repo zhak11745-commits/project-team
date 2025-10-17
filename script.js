@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   
-  // Objek baru untuk unit suhu dan formula konversinya ke basis (Celsius)
+  // Objek untuk unit suhu dan formula konversinya ke basis (Celsius)
   const UNITS = {
     C: { name: 'Celsius', toBase: val => val, fromBase: val => val },
     F: { name: 'Fahrenheit', toBase: val => (val - 32) * 5 / 9, fromBase: val => (val * 9 / 5) + 32 },
@@ -28,16 +28,20 @@ document.addEventListener('DOMContentLoaded', () => {
   // Format angka dengan maksimal 2 angka di belakang koma
   const nf = new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 });
 
+  // Fungsi format angka yang disederhanakan
   function formatNumber(num) {
     if (!isFinite(num)) return '0';
-    return nf.format(Number(Number(num).toFixed(2)));
+    // Intl.NumberFormat sudah menangani pembulatan sesuai maximumFractionDigits
+    return nf.format(num);
   }
 
   function populateSelects() {
     if (fromSelect.options.length > 0) return;
     Object.keys(UNITS).forEach(k => {
-      const o1 = document.createElement('option'); o1.value = k; o1.text = ${k} (${UNITS[k].name}); fromSelect.add(o1);
-      const o2 = document.createElement('option'); o2.value = k; o2.text = ${k} (${UNITS[k].name}); toSelect.add(o2);
+      // Menggunakan backtick (`) untuk template literal
+      const optionText = `${k} (${UNITS[k].name})`;
+      fromSelect.add(new Option(optionText, k));
+      toSelect.add(new Option(optionText, k));
     });
     // Default konversi C ke F
     fromSelect.value = 'C';
@@ -65,10 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const outFormatted = formatNumber(out);
     const valFormatted = formatNumber(val);
 
-    resultValue.textContent = ${outFormatted}° ${to};
-    resultDesc.textContent = ${UNITS[to].name} — dari ${valFormatted}° ${UNITS[from].name};
+    // Menggunakan backtick (`) untuk template literal
+    resultValue.textContent = `${outFormatted}° ${to}`;
+    resultDesc.textContent = `${UNITS[to].name} — dari ${valFormatted}° ${UNITS[from].name}`;
 
-    addHistoryEntry(${valFormatted}° ${from} → ${outFormatted}° ${to});
+    addHistoryEntry(`${valFormatted}° ${from} → ${outFormatted}° ${to}`);
     renderTable(baseValue);
   }
 
@@ -77,10 +82,16 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.entries(UNITS).forEach(([unit, formulas]) => {
       const v = formulas.fromBase(baseValue);
       const row = document.createElement('tr');
-      const tdUnit = document.createElement('td'); tdUnit.textContent = ${unit} (${formulas.name});
-      const tdVal = document.createElement('td'); tdVal.textContent = formatNumber(v);
+      const tdUnit = document.createElement('td');
+      // Menggunakan backtick (`) untuk template literal
+      tdUnit.textContent = `${unit} (${formulas.name})`;
+      const tdVal = document.createElement('td'); 
+      tdVal.textContent = formatNumber(v);
       const tdAct = document.createElement('td');
-      const btn = document.createElement('button'); btn.className = 'copy-btn-small'; btn.type = 'button'; btn.textContent = 'Salin';
+      const btn = document.createElement('button'); 
+      btn.className = 'copy-btn-small'; 
+      btn.type = 'button'; 
+      btn.textContent = 'Salin';
       
       btn.addEventListener('click', () => {
         navigator.clipboard.writeText(formatNumber(v));
@@ -98,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!historyList) return;
     if (historyList.firstElementChild && historyList.firstElementChild.textContent === 'Belum ada riwayat') historyList.innerHTML = '';
     const li = document.createElement('li');
-    li.textContent = ${new Date().toLocaleTimeString('id-ID')} — ${text};
+    // Menggunakan backtick (`) untuk template literal
+    li.textContent = `${new Date().toLocaleTimeString('id-ID')} — ${text}`;
     historyList.prepend(li);
     if (historyList.children.length > 50) historyList.removeChild(historyList.lastChild);
   }
